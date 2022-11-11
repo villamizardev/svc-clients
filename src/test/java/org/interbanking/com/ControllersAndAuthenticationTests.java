@@ -23,6 +23,20 @@ public class ControllersAndAuthenticationTests {
 	private MockMvc mvc;
 	private String token;
 
+	public JSONObject credentials() {
+		JSONObject credentials = new JSONObject();
+		credentials.put("email", "luis@gmail.com");
+		credentials.put("password", "admin");
+		return credentials;
+	}
+	
+	public JSONObject credentialsWithoutAuthorization() {
+		JSONObject credentials = new JSONObject();
+		credentials.put("email", "alejandro@gmail.com");
+		credentials.put("password", "admin");
+		return credentials;
+	}
+	
 	public JSONObject clientObject() {
 		JSONObject jsonClient = new JSONObject();
 		jsonClient.put("name", "Maria");
@@ -52,29 +66,45 @@ public class ControllersAndAuthenticationTests {
 		token = TokenUtils.createToken("luis", "luis@gmail.com");
 		assertNotNull(token);
 	}
-
+	
 	@Test
 	@Order(1)
+	public void generateTokenSendingTheCredentials() throws Exception {
+		JSONObject credentials = credentials();
+		mvc.perform(MockMvcRequestBuilders.post("/auth").accept(MediaType.APPLICATION_JSON)
+		.content(credentials.toString().getBytes()).contentType(MediaType.APPLICATION_JSON).header("idClient", 5)).andExpect(status().isOk());
+	}
+	
+	@Test
+	@Order(2)
+	public void generateTokenSendingTheFalseCredentials() throws Exception {
+		JSONObject credentials = credentialsWithoutAuthorization();
+		mvc.perform(MockMvcRequestBuilders.post("/auth").accept(MediaType.APPLICATION_JSON)
+		.content(credentials.toString().getBytes()).contentType(MediaType.APPLICATION_JSON).header("idClient", 5)).andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	@Order(3)
 	public void shouldNotAllowAccessToUnauthenticatedUsers() throws Exception {
 		mvc.perform(MockMvcRequestBuilders.get("/clients/getClient")).andExpect(status().isForbidden());
 	}
 
 	@Test
-	@Order(2)
+	@Order(4)
 	public void getClientTest() throws Exception {
 		mvc.perform(MockMvcRequestBuilders.get("/clients/getClient").accept(MediaType.APPLICATION_JSON)
 				.header("idClient", 5).header("Authorization", "Bearer " + token)).andExpect(status().isOk());
 	}
 
 	@Test
-	@Order(3)
+	@Order(5)
 	public void getAllClientTest() throws Exception {
 		mvc.perform(MockMvcRequestBuilders.get("/clients/getAllClients").accept(MediaType.APPLICATION_JSON)
 				.header("idClient", 5).header("Authorization", "Bearer " + token)).andExpect(status().isOk());
 	}
 
 	@Test
-	@Order(4)
+	@Order(6)
 	public void createNewClient() throws Exception {
 		JSONObject jsonClient = clientObject();
 		mvc.perform(MockMvcRequestBuilders.post("/clients/createClient").accept(MediaType.APPLICATION_JSON)
@@ -83,7 +113,7 @@ public class ControllersAndAuthenticationTests {
 	}
 	
 	@Test
-	@Order(5)
+	@Order(7)
 	public void updateNewClient() throws Exception {
 		JSONObject jsonClient = clientObject();
 		mvc.perform(MockMvcRequestBuilders.put("/clients/updateClient").accept(MediaType.APPLICATION_JSON)
@@ -92,7 +122,7 @@ public class ControllersAndAuthenticationTests {
 	}
 	
 	@Test
-	@Order(6)
+	@Order(8)
 	public void createNewClientWithNullProperties() throws Exception {
 		JSONObject jsonClient = clientObjectWithNullProperties();
 		mvc.perform(MockMvcRequestBuilders.put("/clients/updateClient").accept(MediaType.APPLICATION_JSON)
@@ -101,7 +131,7 @@ public class ControllersAndAuthenticationTests {
 	}
 	
 	@Test
-	@Order(7)
+	@Order(9)
 	public void updateNewClientWithNullProperties() throws Exception {
 		JSONObject jsonClient = clientObjectWithNullProperties();
 		mvc.perform(MockMvcRequestBuilders.put("/clients/updateClient").accept(MediaType.APPLICATION_JSON)
